@@ -27,25 +27,27 @@ void ssd1306_UpdateScreen(void) {
   clear_screen();
 
   // Top border
-  for (uint16_t x = 0; x < SSD1306_WIDTH + 2; ++x)
-    printf("█");
-  printf("\n");
+  printf("╔");
+  for (uint16_t x = 0; x < SSD1306_WIDTH; ++x)
+    printf("═");
+  printf("╗\n");
 
   // '█' - White, ' ' - Black
   for (uint16_t y = 0; y < SSD1306_HEIGHT; ++y) {
-    printf("█");
+    printf("║");  // Left border
     for (uint16_t x = 0; x < SSD1306_WIDTH; ++x)
       if (ssd1306_Buffer[x][y] == White)
         printf("█");
       else
         printf(" ");
-    printf("█\n");
+    printf("║\n");  // Right border
   }
 
   // Bottom border
+  printf("╚");
   for (uint16_t x = 0; x < SSD1306_WIDTH + 2; ++x)
-    printf("█");
-  printf("\n");
+    printf("═");
+  printf("╝\n");
 }
 
 /*
