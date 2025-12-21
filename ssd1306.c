@@ -6,7 +6,7 @@
 SSD1306_COLOR ssd1306_Buffer[SSD1306_WIDTH][SSD1306_HEIGHT] = {0};
 
 // Clear the terminal
-void clear_screen(void) {
+static void clear_screen(void) {
 #ifdef _WIN32
   system("cls");
 #else
