@@ -45,7 +45,7 @@ void ssd1306_UpdateScreen(void) {
 
   // Bottom border
   printf("╚");
-  for (uint16_t x = 0; x < SSD1306_WIDTH + 2; ++x)
+  for (uint16_t x = 0; x < SSD1306_WIDTH; ++x)
     printf("═");
   printf("╝\n");
 }
