@@ -1,43 +1,43 @@
 /**
- * This Library was inspired by an SSD1306 OLED display library written
+ * This Library was inspired by an SSD1306 OLED ssd1306 library written
  * by Aleksander Alekseev (afiskon).
  *
  * https://github.com/afiskon/stm32-ssd1306
  */
 
-#ifndef __DISPLAY_H__
-#define __DISPLAY_H__
+#ifndef __SSD1306_H__
+#define __SSD1306_H__
 
 #include <stdint.h>
 
-#define DISPLAY_WIDTH 128
-#define DISPLAY_HEIGHT 64
+#define SSD1306_WIDTH 128
+#define SSD1306_HEIGHT 64
 
 // Enumeration for screen colors
 typedef enum {
-  Black = 0x00,  // Black color, '.' character
-  White = 0x01   // White color, '@' character
-} DISPLAY_COLOR;
+  Black = 0x00,  // Black color, ' ' character
+  White = 0x01   // White color, '█' character
+} SSD1306_COLOR;
 
 typedef struct {
   uint8_t x;
   uint8_t y;
-} DISPLAY_VERTEX;
+} SSD1306_VERTEX;
 
 // Virtual display
-extern DISPLAY_COLOR display_Buffer[DISPLAY_WIDTH][DISPLAY_HEIGHT];
+extern SSD1306_COLOR ssd1306_Buffer[SSD1306_WIDTH][SSD1306_HEIGHT];
 
 // Procedure definitions
-void display_Fill(DISPLAY_COLOR color);
-void display_UpdateScreen(void);
-void display_DrawPixel(uint8_t x, uint8_t y, DISPLAY_COLOR color);
-void display_Line(uint8_t x1,
+void ssd1306_Fill(SSD1306_COLOR color);
+void ssd1306_UpdateScreen(void);
+void ssd1306_DrawPixel(uint8_t x, uint8_t y, SSD1306_COLOR color);
+void ssd1306_Line(uint8_t x1,
                   uint8_t y1,
                   uint8_t x2,
                   uint8_t y2,
-                  DISPLAY_COLOR color);
-void display_Polyline(const DISPLAY_VERTEX* par_vertex,
+                  SSD1306_COLOR color);
+void ssd1306_Polyline(const SSD1306_VERTEX* par_vertex,
                       uint16_t par_size,
-                      DISPLAY_COLOR color);
+                      SSD1306_COLOR color);
 
-#endif  // __DISPLAY_H__
+#endif  // __SSD1306_H__
