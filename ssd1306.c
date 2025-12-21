@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-SSD1306_COLOR ssd1306_Buffer[SSD1306_WIDTH][SSD1306_HEIGHT] = {0};
+SSD1306_COLOR SSD1306_Buffer[SSD1306_WIDTH][SSD1306_HEIGHT] = {0};
 
 // Clear the terminal
 static void clear_screen(void) {
@@ -18,7 +18,7 @@ static void clear_screen(void) {
 void ssd1306_Fill(SSD1306_COLOR color) {
   for (uint16_t y = 0; y < SSD1306_HEIGHT; ++y)
     for (uint16_t x = 0; x < SSD1306_WIDTH; ++x)
-      ssd1306_Buffer[x][y] = color;
+      SSD1306_Buffer[x][y] = color;
 }
 
 // Write the terminal with changes to the screen
@@ -36,7 +36,7 @@ void ssd1306_UpdateScreen(void) {
   for (uint16_t y = 0; y < SSD1306_HEIGHT; ++y) {
     printf("║");  // Left border
     for (uint16_t x = 0; x < SSD1306_WIDTH; ++x)
-      if (ssd1306_Buffer[x][y] == White)
+      if (SSD1306_Buffer[x][y] == White)
         printf("█");
       else
         printf(" ");
@@ -60,7 +60,7 @@ void ssd1306_DrawPixel(uint8_t x, uint8_t y, SSD1306_COLOR color) {
   if (x >= SSD1306_WIDTH || y >= SSD1306_HEIGHT)
     return;
 
-  ssd1306_Buffer[x][y] = color;
+  SSD1306_Buffer[x][y] = color;
 }
 
 // Draw line by Bresenhem's algorithm

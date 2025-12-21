@@ -16,7 +16,8 @@
 // Enumeration for screen colors
 typedef enum {
   Black = 0x00,  // Black color, ' ' character
-  White = 0x01   // White color, '█' character
+  White = 0x01  // Pixel is set, '█' character. Color can be altered with escape
+                // codes or terminal configuration
 } SSD1306_COLOR;
 
 typedef struct {
@@ -24,8 +25,8 @@ typedef struct {
   uint8_t y;
 } SSD1306_VERTEX;
 
-// Virtual display
-extern SSD1306_COLOR ssd1306_Buffer[SSD1306_WIDTH][SSD1306_HEIGHT];
+// Screenbuffer
+extern SSD1306_COLOR SSD1306_Buffer[SSD1306_WIDTH][SSD1306_HEIGHT];
 
 // Procedure definitions
 void ssd1306_Fill(SSD1306_COLOR color);
