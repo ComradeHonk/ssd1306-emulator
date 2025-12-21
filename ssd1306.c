@@ -1,4 +1,4 @@
-#include "display.h"
+#include "ssd1306.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
