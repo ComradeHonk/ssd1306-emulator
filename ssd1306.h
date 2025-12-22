@@ -13,12 +13,25 @@
 #define SSD1306_HEIGHT 64
 #define SSD1306_WIDTH 128
 
+// Include all fonts by default
+#define SSD1306_INCLUDE_FONT_6x8
+#define SSD1306_INCLUDE_FONT_7x10
+#define SSD1306_INCLUDE_FONT_11x18
+#define SSD1306_INCLUDE_FONT_16x26
+#define SSD1306_INCLUDE_FONT_16x24
+#define SSD1306_INCLUDE_FONT_16x15
+
 // Enumeration for screen colors
 typedef enum {
   Black = 0x00, // Black color, ' ' character
   White = 0x01  // Pixel is set, '█' character. Color can be altered with escape
                 // codes or terminal configuration
 } SSD1306_COLOR;
+
+typedef enum {
+  SSD1306_OK = 0x00,
+  SSD1306_ERR = 0x01 // Generic error
+} SSD1306_Error_t;
 
 // Struct to store transformations
 typedef struct {
@@ -61,6 +74,18 @@ void ssd1306_FillCircle(uint8_t par_x, uint8_t par_y, uint8_t par_r, SSD1306_COL
 void ssd1306_Polyline(const SSD1306_VERTEX* par_vertex, uint16_t par_size, SSD1306_COLOR color);
 void ssd1306_DrawRectangle(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, SSD1306_COLOR color);
 void ssd1306_FillRectangle(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, SSD1306_COLOR color);
+
+/**
+ * @brief Invert color of pixels in rectangle (include border)
+ *
+ * @param x1 X Coordinate of top left corner
+ * @param y1 Y Coordinate of top left corner
+ * @param x2 X Coordinate of bottom right corner
+ * @param y2 Y Coordinate of bottom right corner
+ * @return SSD1306_Error_t status
+ */
+SSD1306_Error_t ssd1306_InvertRectangle(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2);
+
 void ssd1306_DrawBitmap(
     uint8_t x, uint8_t y, const unsigned char* bitmap, uint8_t w, uint8_t h, SSD1306_COLOR color
 );

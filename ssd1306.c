@@ -371,6 +371,28 @@ void ssd1306_FillRectangle(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, SSD13
       ssd1306_DrawPixel(x, y, color);
 }
 
+SSD1306_Error_t ssd1306_InvertRectangle(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2) {
+  if ((x2 >= SSD1306_WIDTH) || (y2 >= SSD1306_HEIGHT)) {
+    return SSD1306_ERR;
+  }
+  if ((x1 > x2) || (y1 > y2)) {
+    return SSD1306_ERR;
+  }
+
+  // Fill rectangle with inverted colors
+  uint8_t x_start = ((x1 <= x2) ? x1 : x2);
+  uint8_t x_end = ((x1 <= x2) ? x2 : x1);
+  uint8_t y_start = ((y1 <= y2) ? y1 : y2);
+  uint8_t y_end = ((y1 <= y2) ? y2 : y1);
+
+  for (uint8_t y = y_start; (y <= y_end) && (y < SSD1306_HEIGHT); y++)
+    for (uint8_t x = x_start; (x <= x_end) && (x < SSD1306_WIDTH); x++)
+      // Draw inverted
+      ssd1306_DrawPixel(x, y, !SSD1306_Buffer[x][y]);
+
+  return SSD1306_OK;
+}
+
 // Draw a bitmap
 void ssd1306_DrawBitmap(
     uint8_t x, uint8_t y, const unsigned char* bitmap, uint8_t w, uint8_t h, SSD1306_COLOR color
