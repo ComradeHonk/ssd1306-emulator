@@ -13,6 +13,12 @@ static SSD1306_t SSD1306;
 
 // Initialize the screen
 void ssd1306_Init(void) {
+  // Set proper codepage on Windows
+#ifdef _WIN32
+  system("chcp 65001");
+  system("cls");
+#endif
+
   // Clear screen
   ssd1306_Fill(Black);
 
@@ -35,8 +41,10 @@ void ssd1306_Fill(SSD1306_COLOR color) {
 static void clear_screen(void) {
 #ifdef _WIN32
   system("cls");
-#else
+#elif defined(__linux__) || defined(__APPLE__)
   system("clear");
+#else
+#error "Platform unsupported"
 #endif
 }
 
