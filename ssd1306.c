@@ -49,7 +49,7 @@ void ssd1306_UpdateScreen(void) {
 
   // Top border
   printf("╔");
-  for (x = 0; x < SSD1306_WIDTH; x++)
+  for (x = 0; x < SSD1306_WIDTH * 2; x++)
     printf("═");
   printf("╗\n");
 
@@ -58,16 +58,16 @@ void ssd1306_UpdateScreen(void) {
     printf("║"); // Left border
     for (x = 0; x < SSD1306_WIDTH; x++) {
       if (SSD1306_Buffer[x + (y / 8) * SSD1306_WIDTH] & (1 << (y % 8)))
-        printf("█");
+        printf("██");
       else
-        printf(" ");
+        printf("  ");
     }
     printf("║\n"); // Right border
   }
 
   // Bottom border
   printf("╚");
-  for (x = 0; x < SSD1306_WIDTH; x++)
+  for (x = 0; x < SSD1306_WIDTH * 2; x++)
     printf("═");
   printf("╝\n");
 }
