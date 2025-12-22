@@ -3,9 +3,10 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 // Screenbuffer
-static SSD1306_COLOR SSD1306_Buffer[SSD1306_WIDTH][SSD1306_HEIGHT] = {0};
+static uint8_t SSD1306_Buffer[SSD1306_BUFFER_SIZE];
 
 // Screen object
 static SSD1306_t SSD1306;
@@ -27,9 +28,7 @@ void ssd1306_Init(void) {
 
 // Fill the whole screen with the given color
 void ssd1306_Fill(SSD1306_COLOR color) {
-  for (uint16_t y = 0; y < SSD1306_HEIGHT; y++)
-    for (uint16_t x = 0; x < SSD1306_WIDTH; x++)
-      SSD1306_Buffer[x][y] = color;
+  memset(SSD1306_Buffer, (color == Black) ? 0x00 : 0xFF, sizeof(SSD1306_Buffer));
 }
 
 // Clear the terminal
@@ -58,7 +57,7 @@ void ssd1306_UpdateScreen(void) {
   for (y = 0; y < SSD1306_HEIGHT; y++) {
     printf("║"); // Left border
     for (x = 0; x < SSD1306_WIDTH; x++) {
-      if (SSD1306_Buffer[x][y] == White)
+      if (SSD1306_Buffer[x + (y / 8) * SSD1306_WIDTH] & (1 << (y % 8)))
         printf("█");
       else
         printf(" ");
@@ -84,7 +83,11 @@ void ssd1306_DrawPixel(uint8_t x, uint8_t y, SSD1306_COLOR color) {
     // Don't write outside the buffer
     return;
 
-  SSD1306_Buffer[x][y] = color;
+  // Draw in the right color
+  if (color == White)
+    SSD1306_Buffer[x + (y / 8) * SSD1306_WIDTH] |= 1 << (y % 8);
+  else
+    SSD1306_Buffer[x + (y / 8) * SSD1306_WIDTH] &= ~(1 << (y % 8));
 }
 
 /*
@@ -372,23 +375,31 @@ void ssd1306_FillRectangle(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, SSD13
 }
 
 SSD1306_Error_t ssd1306_InvertRectangle(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2) {
-  if ((x2 >= SSD1306_WIDTH) || (y2 >= SSD1306_HEIGHT)) {
+  if ((x2 >= SSD1306_WIDTH) || (y2 >= SSD1306_HEIGHT))
     return SSD1306_ERR;
-  }
-  if ((x1 > x2) || (y1 > y2)) {
+
+  if ((x1 > x2) || (y1 > y2))
     return SSD1306_ERR;
+
+  uint32_t i;
+  if ((y1 / 8) != (y2 / 8)) {
+    // If rectangle doesn't lie on one 8px row
+    for (uint32_t x = x1; x <= x2; x++) {
+      i = x + (y1 / 8) * SSD1306_WIDTH;
+      SSD1306_Buffer[i] ^= 0xFF << (y1 % 8);
+      i += SSD1306_WIDTH;
+
+      for (; i < x + (y2 / 8) * SSD1306_WIDTH; i += SSD1306_WIDTH)
+        SSD1306_Buffer[i] ^= 0xFF;
+
+      SSD1306_Buffer[i] ^= 0xFF >> (7 - (y2 % 8));
+    }
+  } else {
+    // If rectangle lies on one 8px row
+    const uint8_t mask = (0xFF << (y1 % 8)) & (0xFF >> (7 - (y2 % 8)));
+    for (i = x1 + (y1 / 8) * SSD1306_WIDTH; i <= (uint32_t)x2 + (y2 / 8) * SSD1306_WIDTH; i++)
+      SSD1306_Buffer[i] ^= mask;
   }
-
-  // Fill rectangle with inverted colors
-  uint8_t x_start = ((x1 <= x2) ? x1 : x2);
-  uint8_t x_end = ((x1 <= x2) ? x2 : x1);
-  uint8_t y_start = ((y1 <= y2) ? y1 : y2);
-  uint8_t y_end = ((y1 <= y2) ? y2 : y1);
-
-  for (uint8_t y = y_start; (y <= y_end) && (y < SSD1306_HEIGHT); y++)
-    for (uint8_t x = x_start; (x <= x_end) && (x < SSD1306_WIDTH); x++)
-      // Draw inverted
-      ssd1306_DrawPixel(x, y, !SSD1306_Buffer[x][y]);
 
   return SSD1306_OK;
 }

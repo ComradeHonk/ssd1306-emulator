@@ -13,6 +13,8 @@
 #define SSD1306_HEIGHT 64
 #define SSD1306_WIDTH 128
 
+#define SSD1306_BUFFER_SIZE (SSD1306_WIDTH * SSD1306_HEIGHT / 8)
+
 // Include all fonts by default
 #define SSD1306_INCLUDE_FONT_6x8
 #define SSD1306_INCLUDE_FONT_7x10
