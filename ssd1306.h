@@ -1,5 +1,5 @@
 /**
- * This Library was based on SSD1306 OLED display library written
+ * This Library is based on SSD1306 OLED display library written
  * by Aleksander Alekseev (afiskon).
  *
  * https://github.com/afiskon/stm32-ssd1306
