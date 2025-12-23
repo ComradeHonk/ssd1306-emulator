@@ -121,106 +121,7 @@ const unsigned char github_logo_64x64[] = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 
-void ssd1306_TestBorder() {
-  ssd1306_Fill(Black);
-
-  uint8_t x = 0;
-  uint8_t y = 0;
-  do {
-    ssd1306_DrawPixel(x, y, Black);
-
-    if ((y == 0) && (x < (SSD1306_WIDTH - 1)))
-      x++;
-    else if ((x == (SSD1306_WIDTH - 1)) && (y < (SSD1306_HEIGHT - 1)))
-      y++;
-    else if ((y == (SSD1306_HEIGHT - 1)) && (x > 0))
-      x--;
-    else
-      y--;
-
-    ssd1306_DrawPixel(x, y, White);
-    ssd1306_UpdateScreen();
-
-    usleep(5 * 1000);
-  } while (x > 0 || y > 0);
-
-  sleep(1);
-}
-
-void ssd1306_TestFonts1() {
-  uint8_t y = 0;
-  ssd1306_Fill(Black);
-
-#ifdef SSD1306_INCLUDE_FONT_16x26
-  ssd1306_SetCursor(2, y);
-  ssd1306_WriteString("Font 16x26", Font_16x26, White);
-  y += 26;
-#endif
-
-#ifdef SSD1306_INCLUDE_FONT_11x18
-  ssd1306_SetCursor(2, y);
-  ssd1306_WriteString("Font 11x18", Font_11x18, White);
-  y += 18;
-#endif
-
-#ifdef SSD1306_INCLUDE_FONT_7x10
-  ssd1306_SetCursor(2, y);
-  ssd1306_WriteString("Font 7x10", Font_7x10, White);
-  y += 10;
-#endif
-
-#ifdef SSD1306_INCLUDE_FONT_6x8
-  ssd1306_SetCursor(2, y);
-  ssd1306_WriteString("Font 6x8", Font_6x8, White);
-#endif
-
-  ssd1306_UpdateScreen();
-}
-
-// This test shows how an 128x64 px OLED can replace a 0802 LCD.
-void ssd1306_TestFonts2() {
-#ifdef SSD1306_INCLUDE_FONT_16x24
-  uint8_t x1, y1, x2, y2;
-
-  ssd1306_Fill(Black);
-
-  ssd1306_SetCursor(0, 4);
-  ssd1306_WriteString("18.092.5", Font_16x24, White);
-  ssd1306_SetCursor(0, 4 + 24 + 8);
-  ssd1306_WriteString("RIT+1000", Font_16x24, White);
-
-  // Underline
-  x1 = 6 * 16;
-  y1 = 4 + 24 + 8 + 24;
-  x2 = x1 + 16;
-  y2 = y1 + 2;
-  ssd1306_FillRectangle(x1, y1, x2, y2, White);
-
-  ssd1306_UpdateScreen();
-#endif
-}
-
-// Test of proportional (non-monospaced) font.
-void ssd1306_TestFonts3() {
-  ssd1306_Fill(Black);
-#ifdef SSD1306_INCLUDE_FONT_16x15
-  ssd1306_SetCursor(4, 4);
-  ssd1306_WriteString("Proportional", Font_16x15, White);
-  ssd1306_SetCursor(4, 24);
-  ssd1306_WriteString("text... Sweet!", Font_16x15, White);
-  ssd1306_SetCursor(4, 44);
-  ssd1306_WriteString("3.1415  04:20", Font_16x15, White);
-#elif defined(SSD1306_INCLUDE_FONT_11x18)
-  ssd1306_SetCursor(4, 4);
-  ssd1306_WriteString("Skip test", Font_11x18, White);
-  ssd1306_SetCursor(4, 24);
-  ssd1306_WriteString("Font not", Font_11x18, White);
-  ssd1306_SetCursor(4, 44);
-  ssd1306_WriteString("included!", Font_11x18, White);
-#endif
-  ssd1306_UpdateScreen();
-}
-
+// Replacement for HAL_GetTick
 static uint32_t gettick(void) {
 #ifdef _WIN32
   static LARGE_INTEGER freq;
@@ -261,7 +162,7 @@ static uint32_t gettick(void) {
 #endif
 }
 
-void ssd1306_TestFPS() {
+void ssd1306_TestFPS(void) {
   ssd1306_Fill(White);
 
   uint32_t start = gettick();
@@ -299,13 +200,108 @@ void ssd1306_TestFPS() {
   ssd1306_UpdateScreen();
 }
 
-void ssd1306_TestLine() {
-  ssd1306_Line(1, 1, SSD1306_WIDTH - 1, SSD1306_HEIGHT - 1, White);
-  ssd1306_Line(SSD1306_WIDTH - 1, 1, 1, SSD1306_HEIGHT - 1, White);
+void ssd1306_TestBorder(void) {
+  ssd1306_Fill(Black);
+
+  uint8_t x = 0;
+  uint8_t y = 0;
+
+  do {
+    ssd1306_DrawPixel(x, y, Black);
+
+    if ((y == 0) && (x < (SSD1306_WIDTH - 1)))
+      x++;
+    else if ((x == (SSD1306_WIDTH - 1)) && (y < (SSD1306_HEIGHT - 1)))
+      y++;
+    else if ((y == (SSD1306_HEIGHT - 1)) && (x > 0))
+      x--;
+    else
+      y--;
+
+    ssd1306_DrawPixel(x, y, White);
+    ssd1306_UpdateScreen();
+
+    usleep(5 * 1000);
+  } while (x > 0 || y > 0);
+
+  sleep(1);
+}
+
+void ssd1306_TestFonts1(void) {
+  uint8_t y = 0;
+  ssd1306_Fill(Black);
+
+#ifdef SSD1306_INCLUDE_FONT_16x26
+  ssd1306_SetCursor(2, y);
+  ssd1306_WriteString("Font 16x26", Font_16x26, White);
+  y += 26;
+#endif
+
+#ifdef SSD1306_INCLUDE_FONT_11x18
+  ssd1306_SetCursor(2, y);
+  ssd1306_WriteString("Font 11x18", Font_11x18, White);
+  y += 18;
+#endif
+
+#ifdef SSD1306_INCLUDE_FONT_7x10
+  ssd1306_SetCursor(2, y);
+  ssd1306_WriteString("Font 7x10", Font_7x10, White);
+  y += 10;
+#endif
+
+#ifdef SSD1306_INCLUDE_FONT_6x8
+  ssd1306_SetCursor(2, y);
+  ssd1306_WriteString("Font 6x8", Font_6x8, White);
+#endif
+
   ssd1306_UpdateScreen();
 }
 
-void ssd1306_TestRectangle() {
+// This test shows how an 128x64 px OLED can replace a 0802 LCD.
+void ssd1306_TestFonts2(void) {
+#ifdef SSD1306_INCLUDE_FONT_16x24
+  uint8_t x1, y1, x2, y2;
+
+  ssd1306_Fill(Black);
+
+  ssd1306_SetCursor(0, 4);
+  ssd1306_WriteString("18.092.5", Font_16x24, White);
+  ssd1306_SetCursor(0, 4 + 24 + 8);
+  ssd1306_WriteString("RIT+1000", Font_16x24, White);
+
+  // Underline
+  x1 = 6 * 16;
+  y1 = 4 + 24 + 8 + 24;
+  x2 = x1 + 16;
+  y2 = y1 + 2;
+  ssd1306_FillRectangle(x1, y1, x2, y2, White);
+
+  ssd1306_UpdateScreen();
+#endif
+}
+
+// Test of proportional (non-monospaced) font.
+void ssd1306_TestFonts3(void) {
+  ssd1306_Fill(Black);
+#ifdef SSD1306_INCLUDE_FONT_16x15
+  ssd1306_SetCursor(4, 4);
+  ssd1306_WriteString("Proportional", Font_16x15, White);
+  ssd1306_SetCursor(4, 24);
+  ssd1306_WriteString("text... Sweet!", Font_16x15, White);
+  ssd1306_SetCursor(4, 44);
+  ssd1306_WriteString("3.1415  04:20", Font_16x15, White);
+#elif defined(SSD1306_INCLUDE_FONT_11x18)
+  ssd1306_SetCursor(4, 4);
+  ssd1306_WriteString("Skip test", Font_11x18, White);
+  ssd1306_SetCursor(4, 24);
+  ssd1306_WriteString("Font not", Font_11x18, White);
+  ssd1306_SetCursor(4, 44);
+  ssd1306_WriteString("included!", Font_11x18, White);
+#endif
+  ssd1306_UpdateScreen();
+}
+
+void ssd1306_TestRectangle(void) {
   uint32_t delta;
 
   for (delta = 0; delta < 5; delta++) {
@@ -320,7 +316,13 @@ void ssd1306_TestRectangle() {
   ssd1306_UpdateScreen();
 }
 
-void ssd1306_TestRectangleFill() {
+void ssd1306_TestLine(void) {
+  ssd1306_Line(1, 1, SSD1306_WIDTH - 1, SSD1306_HEIGHT - 1, White);
+  ssd1306_Line(SSD1306_WIDTH - 1, 1, 1, SSD1306_HEIGHT - 1, White);
+  ssd1306_UpdateScreen();
+}
+
+void ssd1306_TestRectangleFill(void) {
   ssd1306_FillRectangle(31, 1, 65, 35, White);
   ssd1306_FillRectangle(10, 45, 70, 60, White);
   ssd1306_FillRectangle(75, 10, 100, 45, White);
@@ -328,7 +330,7 @@ void ssd1306_TestRectangleFill() {
   ssd1306_UpdateScreen();
 }
 
-void ssd1306_TestRectangleInvert() {
+void ssd1306_TestRectangleInvert(void) {
 #ifdef SSD1306_INCLUDE_FONT_11x18
   ssd1306_SetCursor(2, 0);
   ssd1306_WriteString("Black", Font_11x18, White);
@@ -352,25 +354,7 @@ void ssd1306_TestRectangleInvert() {
   ssd1306_UpdateScreen();
 }
 
-void ssd1306_TestCircle() {
-  uint32_t delta;
-
-  for (delta = 0; delta < 5; delta++)
-    ssd1306_DrawCircle(20 * delta + 30, 15, 10, White);
-
-  for (delta = 0; delta < 5; delta++)
-    ssd1306_FillCircle(23 * delta + 15, 40, 10, White);
-
-  ssd1306_UpdateScreen();
-}
-
-void ssd1306_TestArc() {
-  ssd1306_DrawArc(30, 30, 30, 20, 270, White);
-  ssd1306_DrawArcWithRadiusLine(80, 55, 10, 30, 270, White);
-  ssd1306_UpdateScreen();
-}
-
-void ssd1306_TestPolyline() {
+void ssd1306_TestPolyline(void) {
   SSD1306_VERTEX loc_vertex[] = {
       {35, 40},
       {40, 20},
@@ -385,7 +369,25 @@ void ssd1306_TestPolyline() {
   ssd1306_UpdateScreen();
 }
 
-void ssd1306_TestDrawBitmap() {
+void ssd1306_TestArc(void) {
+  ssd1306_DrawArc(30, 30, 30, 20, 270, White);
+  ssd1306_DrawArcWithRadiusLine(80, 55, 10, 30, 270, White);
+  ssd1306_UpdateScreen();
+}
+
+void ssd1306_TestCircle(void) {
+  uint32_t delta;
+
+  for (delta = 0; delta < 5; delta++)
+    ssd1306_DrawCircle(20 * delta + 30, 15, 10, White);
+
+  for (delta = 0; delta < 5; delta++)
+    ssd1306_FillCircle(23 * delta + 15, 40, 10, White);
+
+  ssd1306_UpdateScreen();
+}
+
+void ssd1306_TestDrawBitmap(void) {
   ssd1306_Fill(White);
   ssd1306_DrawBitmap(0, 0, garfield_128x64, 128, 64, Black);
   ssd1306_UpdateScreen();
@@ -403,7 +405,7 @@ void ssd1306_TestDrawBitmap() {
   ssd1306_UpdateScreen();
 }
 
-void ssd1306_TestAll() {
+void ssd1306_TestAll(void) {
   ssd1306_Init();
 
   ssd1306_TestFPS();
