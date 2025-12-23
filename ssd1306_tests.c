@@ -250,10 +250,10 @@ static uint32_t gettick(void) {
 
   if (nsec < 0) {
     sec--;
-    nsec += 1000000000L;
+    nsec += 1000000000l;
   }
 
-  uint64_t ms = (uint64_t)sec * 1000ULL + (uint64_t)nsec / 1000000ULL;
+  uint64_t ms = (uint64_t)sec * 1000ull + (uint64_t)nsec / 1000000ull;
 
   return (uint32_t)ms;
 #else
