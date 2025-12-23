@@ -8,20 +8,10 @@
 #ifndef __SSD1306_H__
 #define __SSD1306_H__
 
+#include "ssd1306_conf.h"
 #include <stdint.h>
 
-#define SSD1306_HEIGHT 64
-#define SSD1306_WIDTH 128
-
 #define SSD1306_BUFFER_SIZE (SSD1306_WIDTH * SSD1306_HEIGHT / 8)
-
-// Include all fonts by default
-#define SSD1306_INCLUDE_FONT_6x8
-#define SSD1306_INCLUDE_FONT_7x10
-#define SSD1306_INCLUDE_FONT_11x18
-#define SSD1306_INCLUDE_FONT_16x26
-#define SSD1306_INCLUDE_FONT_16x24
-#define SSD1306_INCLUDE_FONT_16x15
 
 // Enumeration for screen colors
 typedef enum {
