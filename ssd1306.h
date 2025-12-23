@@ -97,4 +97,8 @@ void ssd1306_DrawBitmap(
     uint8_t x, uint8_t y, const unsigned char* bitmap, uint8_t w, uint8_t h, SSD1306_COLOR color
 );
 
+// HAL replacements
+uint32_t HAL_GetTick(void);
+void HAL_Delay(uint32_t Delay);
+
 #endif // __SSD1306_H__

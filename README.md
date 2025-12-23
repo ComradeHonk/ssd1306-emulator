@@ -56,6 +56,10 @@ void ssd1306_FillCircle(uint8_t par_x, uint8_t par_y, uint8_t par_r, SSD1306_COL
 
 // Bitmaps
 void ssd1306_DrawBitmap(uint8_t x, uint8_t y, const unsigned char* bitmap, uint8_t w, uint8_t h, SSD1306_COLOR color);
+
+// HAL replacements
+uint32_t HAL_GetTick(void);
+void HAL_Delay(uint32_t Delay);
 ```
 
 ## Credits

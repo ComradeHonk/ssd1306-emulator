@@ -6,6 +6,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+
+#ifdef _WIN32
+#include <windows.h>
+#elif defined(__linux__) || defined(__APPLE__)
+#include <bits/time.h>
+#include <time.h>
+#else
+#error "Platform unsupported"
+#endif
 
 // Screenbuffer
 static uint8_t SSD1306_Buffer[SSD1306_BUFFER_SIZE];
@@ -472,3 +482,47 @@ void ssd1306_DrawBitmap(
     }
   }
 }
+
+// Emulates the behavior of HAL_GetTick
+uint32_t HAL_GetTick(void) {
+#ifdef _WIN32
+  static LARGE_INTEGER freq;
+  static LARGE_INTEGER start;
+  LARGE_INTEGER now;
+
+  if (freq.QuadPart == 0) {
+    QueryPerformanceFrequency(&freq);
+    QueryPerformanceCounter(&start);
+  }
+
+  QueryPerformanceCounter(&now);
+
+  return (uint32_t)((now.QuadPart - start.QuadPart) * 1000ull / freq.QuadPart);
+#elif defined(__linux__) || defined(__APPLE__)
+  static struct timespec start;
+  struct timespec now;
+
+  if (start.tv_sec == 0 && start.tv_nsec == 0) {
+    clock_gettime(CLOCK_MONOTONIC, &start);
+  }
+
+  clock_gettime(CLOCK_MONOTONIC, &now);
+
+  time_t sec = now.tv_sec - start.tv_sec;
+  long nsec = now.tv_nsec - start.tv_nsec;
+
+  if (nsec < 0) {
+    sec--;
+    nsec += 1000000000l;
+  }
+
+  uint64_t ms = (uint64_t)sec * 1000ull + (uint64_t)nsec / 1000000ull;
+
+  return (uint32_t)ms;
+#else
+#error "Platform unsupported"
+#endif
+}
+
+// Emulates the behavior of HAL_Delay
+void HAL_Delay(uint32_t Delay) { usleep(Delay * 1000); }
