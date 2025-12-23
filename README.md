@@ -19,7 +19,7 @@ clang test_all.c ssd1306.c ssd1306_tests.c ssd1306_fonts.c -lm
 > [!NOTE]
 > Rendering performance may vary between terminal emulators, especially on Windows.
 
-[![Test showcase](https://img.youtube.com/vi/8STQJmwjz-Y/maxresdefault.jpg)](https://youtu.be/8STQJmwjz-Y)
+https://github.com/user-attachments/assets/0cb9d1fb-1a29-4290-ba17-70d979b41b8e
 
 ## API Reference
 
