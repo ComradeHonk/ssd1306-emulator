@@ -686,7 +686,6 @@ static const uint16_t Font6x8[] = {
 };
 #endif
 
-/* see ./examples/custom-fonts/ */
 #ifdef SSD1306_INCLUDE_FONT_16x24
 static const uint16_t Font16x24[] = {
     /* -- <- these are comments and symbol separators */
@@ -4708,8 +4707,6 @@ const SSD1306_Font_t Font_11x18 = {11, 18, Font11x18, NULL};
 #ifdef SSD1306_INCLUDE_FONT_16x26
 const SSD1306_Font_t Font_16x26 = {16, 26, Font16x26, NULL};
 #endif
-
-/* see ./examples/custom-fonts/ */
 #ifdef SSD1306_INCLUDE_FONT_16x24
 const SSD1306_Font_t Font_16x24 = {16, 24, Font16x24, NULL};
 #endif
