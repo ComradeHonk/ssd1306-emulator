@@ -1,5 +1,7 @@
 #include "ssd1306.h"
 #include <math.h>
+#include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -7,19 +9,29 @@
 
 // Screenbuffer
 static uint8_t SSD1306_Buffer[SSD1306_BUFFER_SIZE];
+// Terminal buffer
+static uint8_t terminal_buffer[SSD1306_BUFFER_SIZE];
 
 // Screen object
 static SSD1306_t SSD1306;
 
 // Initialize the screen
 void ssd1306_Init(void) {
-  // Set proper codepage on Windows
+  // Clear terminal screen
 #ifdef _WIN32
+  // Set proper codepage on Windows
   system("chcp 65001");
   system("cls");
+#elif defined(__linux__) || defined(__APPLE__)
+  system("clear");
+#else
+#error "Platform unsupported"
 #endif
 
-  // Clear screen
+  // Hide terminal cursor
+  printf("\033[?25l");
+
+  // Clear screenbuffer
   ssd1306_Fill(Black);
 
   // Flush buffer to screen
@@ -37,47 +49,73 @@ void ssd1306_Fill(SSD1306_COLOR color) {
   memset(SSD1306_Buffer, (color == Black) ? 0x00 : 0xFF, sizeof(SSD1306_Buffer));
 }
 
-// Clear the terminal
-static void clear_screen(void) {
-#ifdef _WIN32
-  system("cls");
-#elif defined(__linux__) || defined(__APPLE__)
-  system("clear");
-#else
-#error "Platform unsupported"
-#endif
-}
-
-// Write the terminal with changes to the screen
+/* Write the terminal with changes to the screen
+ * Uses partial redraw for best performance
+ */
 void ssd1306_UpdateScreen(void) {
   uint16_t x, y;
 
-  // Clear screen before printing
-  clear_screen();
-
-  // Top border
-  printf("╔");
-  for (x = 0; x < SSD1306_WIDTH * 2; x++)
-    printf("═");
-  printf("╗\n");
+  static bool draw_start = true;
+  if (draw_start) {
+    // Print top border only at the start
+    printf("╔");
+    for (x = 0; x < SSD1306_WIDTH * 2; x++)
+      printf("═");
+    printf("╗\n");
+  }
 
   // '█' - White, ' ' - Black
   for (y = 0; y < SSD1306_HEIGHT; y++) {
-    printf("║"); // Left border
+    if (draw_start)
+      printf("║"); // Left border
+
+    bool move_cursor = draw_start ? false : true;
+
     for (x = 0; x < SSD1306_WIDTH; x++) {
-      if (SSD1306_Buffer[x + (y / 8) * SSD1306_WIDTH] & (1 << (y % 8)))
+      size_t buffer_index = x + (y / 8) * SSD1306_WIDTH;
+      uint8_t bit_offset = 1 << (y % 8);
+
+      // If pixel hasn't changed, do not render it
+      if (!draw_start &&
+          !((SSD1306_Buffer[buffer_index] ^ terminal_buffer[buffer_index]) & bit_offset)) {
+        move_cursor = true;
+        continue;
+      }
+
+      // Synchronize buffers
+      if (SSD1306_Buffer[buffer_index] & bit_offset)
+        terminal_buffer[buffer_index] |= bit_offset;
+      else
+        terminal_buffer[buffer_index] &= ~bit_offset;
+
+      if (move_cursor) {
+        // Move terminal cursor to (x, y) using escape codes
+        printf("\033[%d;%dH", y + 2, x * 2 + 2);
+        move_cursor = false;
+      }
+
+      if (SSD1306_Buffer[buffer_index] & bit_offset)
         printf("██");
       else
         printf("  ");
     }
-    printf("║\n"); // Right border
+
+    if (draw_start)
+      printf("║\n"); // Right border
   }
 
-  // Bottom border
-  printf("╚");
-  for (x = 0; x < SSD1306_WIDTH * 2; x++)
-    printf("═");
-  printf("╝\n");
+  if (draw_start) {
+    // Bottom border
+    printf("╚");
+    for (x = 0; x < SSD1306_WIDTH * 2; x++)
+      printf("═");
+    printf("╝\n");
+
+    // Initial drawing has ended. Now rely on line updates
+    draw_start = false;
+  }
+
+  fflush(stdout);
 }
 
 /*
