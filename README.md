@@ -1,5 +1,21 @@
 # ssd1306-emulator
-Library for emulating the SSD1306 OLED display in the terminal.
+Library for emulating the SSD1306 OLED display in the terminal, based on [stm32-ssd1306](https://github.com/afiskon/stm32-ssd1306).
+
+It works by printing the screenbuffer to the terminal using pairs of characters (to achieve the correct aspect ratio):
+- '██' for white pixels
+- spaces for black pixels
+
+A frame is added to show screen boundaries.
+
+It uses partial redraw (draws only changed pixels) to conserve resources and improve performance.
+
+> [!NOTE]
+> Rendering performance may vary between terminal emulators. While Linux terminals can comfortably draw at 2000+ FPS,
+on Windows it's common to have around 3-6 FPS due to Windows console being really slow and inefficient.
+
+In addition to functions available in the [original library](https://github.com/afiskon/stm32-ssd1306),
+it offers PC implementations of `HAL_GetTick` and `HAL_Delay` which might be useful for writing code
+that can be copied-and-pasted into an STM32 project.
 
 ## Usage
 
@@ -7,17 +23,58 @@ Library for emulating the SSD1306 OLED display in the terminal.
 > By default screen size is 128x64. Rendering is done with Unicode characters, so to see the effects
 you'll need to set a very small terminal font size (and have Unicode support, obviously 😉).
 
-Functionality can be tested by compiling test program `test_all.c` with the following command:
+This is a small example of how to use the library:
+```c
+// Include the header file
+#include "path/to/library/ssd1306-emulator/ssd1306.h"
+
+int main() {
+  // Initialize the screen
+  ssd1306_Init();
+
+  // Draw a filled in 20x20 square
+  ssd1306_FillRectangle(10, 10, 30, 30, White);
+
+  // Update the screen. You need to call this to make changes appear on screen
+  ssd1306_UpdateScreen();
+
+  return 0;
+}
 ```
+Compile and run the program:
+```
+gcc path/to/program.c path/to/library/ssd1306-emulator/ssd1306.c -lm && ./a.out
+```
+You should see the square appear in the terminal:
+<img width="1397" height="805" alt="image" src="https://github.com/user-attachments/assets/a94ebefb-95fa-48a0-9f7b-6c97ffe93c15" />
+
+## Supported platforms
+
+Theoretically, anything that can compile C and run a terminal session could work, but the main target are PC operating systems:
+
+| Platform | Status |
+|----------|--------|
+| **Linux/Unix** | Fully supported |
+| **Windows** | Fully supported |
+| **macOS** | Supported, not tested |
+
+## Testing
+
+Functionality can be tested by compiling the program [`test_all.c`](test_all.c) included in this repository:
+```
+git clone https://github.com/ComradeHonk/ssd1306-emulator.git
+cd ssd1306-emulator
 gcc test_all.c ssd1306.c ssd1306_tests.c ssd1306_fonts.c -lm
 ```
 or with `clang`:
 ```
 clang test_all.c ssd1306.c ssd1306_tests.c ssd1306_fonts.c -lm
 ```
-
-> [!NOTE]
-> Rendering performance may vary between terminal emulators, especially on Windows.
+and running it with:
+```
+./a.out
+```
+This should be the output:
 
 https://github.com/user-attachments/assets/0cb9d1fb-1a29-4290-ba17-70d979b41b8e
 
@@ -62,6 +119,44 @@ uint32_t HAL_GetTick(void);
 void HAL_Delay(uint32_t Delay);
 ```
 
+All above functions have more detailed documentation included with their declarations in [`ssd1306.h`](ssd1306.h).
+
+## Configuration
+
+Configuration is done by editing the contents of [`ssd1306_conf.h`](ssd1306_conf.h).
+
+### Screen resolution
+The original library is made to work with SSD1306, SH1106, SH1107 and SSD1309 OLED displays as they are compatible with each other.
+This emulator isn't limited to any particular set of devices as it doesn't interface with real hardware, so it can be configured for any
+screen resolution:
+```c
+// The width of the screen can be set using this
+// define. The default value is 128
+#define SSD1306_WIDTH 128
+
+// The height can be changed as well if necessary.
+// The default value is 64
+#define SSD1306_HEIGHT 64
+```
+
+### Fonts
+There are a number of fonts included with the library. Their use can be toggled with `#define`:
+```c
+// Include all fonts by default
+#define SSD1306_INCLUDE_FONT_6x8
+#define SSD1306_INCLUDE_FONT_7x10
+#define SSD1306_INCLUDE_FONT_11x18
+#define SSD1306_INCLUDE_FONT_16x26
+
+#define SSD1306_INCLUDE_FONT_16x24
+
+#define SSD1306_INCLUDE_FONT_16x15
+```
+
+If you wish to use custom fonts, see [this example](https://github.com/afiskon/stm32-ssd1306/tree/master/examples/custom-fonts) in the original library repo.
+
 ## Credits
+
+Thanks to [Wydział Wewnętrzny](https://github.com/WW5833) for helping with optimization and Windows testing.
 
 Based on [STM32 SSD1306 library](https://github.com/afiskon/stm32-ssd1306) written by Aleksander Alekseev (afiskon)
