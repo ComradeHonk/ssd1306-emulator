@@ -1,4 +1,5 @@
 #include "ssd1306.h"
+#include "ssd1306_conf.h"
 #include <math.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -116,6 +117,9 @@ void ssd1306_UpdateScreen(void) {
   }
 
   fflush(stdout);
+
+  // Move terminal cursor below the screen
+  printf("\033[%d;%dH", SSD1306_HEIGHT + 3, 1);
 }
 
 /*
