@@ -48,6 +48,15 @@ gcc path/to/program.c path/to/library/ssd1306-emulator/ssd1306.c -lm && ./a.out
 You should see the square appear in the terminal:
 <img width="1397" height="805" alt="image" src="https://github.com/user-attachments/assets/a94ebefb-95fa-48a0-9f7b-6c97ffe93c15" />
 
+### Headers
+
+| Header | Contents |
+|--------|----------|
+| [`ssd1306.h`](ssd1306.h) | Main header file. Contains all API functions |
+| [`ssd1306_conf.h`](ssd1306_conf.h) | Screen configuration and enabled fonts |
+| [`ssd1306_fonts.h`](ssd1306_fonts.h) | Fonts for writing text to the screen |
+| [`ssd1306_tests.h`](ssd1306_tests.h) | Various tests for exploring functionality and learning |
+
 ## Supported platforms
 
 Theoretically, anything that can compile C and run a terminal session could work, but the main target are PC operating systems:
@@ -65,10 +74,6 @@ Functionality can be tested by compiling the program [`test_all.c`](test_all.c) 
 git clone https://github.com/ComradeHonk/ssd1306-emulator.git
 cd ssd1306-emulator
 gcc test_all.c ssd1306.c ssd1306_tests.c ssd1306_fonts.c -lm
-```
-or with `clang`:
-```
-clang test_all.c ssd1306.c ssd1306_tests.c ssd1306_fonts.c -lm
 ```
 and running it with:
 ```
