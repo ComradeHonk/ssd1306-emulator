@@ -7,16 +7,26 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+
+#ifdef _WIN32
+#include <windows.h>
+#elif defined(__linux__) || defined(__APPLE__)
+#include <bits/time.h>
+#include <time.h>
+#else
+#error "Platform unsupported"
+#endif
 
 // Screenbuffer
 static uint8_t SSD1306_Buffer[SSD1306_BUFFER_SIZE];
-// Terminal buffer
-static uint8_t terminal_buffer[SSD1306_BUFFER_SIZE];
+// Terminal buffer, needed for partial redraw
+static uint8_t SSD1306_TerminalBuffer[SSD1306_BUFFER_SIZE];
 
 // Screen object
 static SSD1306_t SSD1306;
 
-// Initialize the screen
+// Initialize the screen and terminal with defaults
 void ssd1306_Init(void) {
   // Clear terminal screen
 #ifdef _WIN32
@@ -78,16 +88,16 @@ void ssd1306_UpdateScreen(void) {
 
       // If pixel hasn't changed, do not render it
       if (!draw_start &&
-          !((SSD1306_Buffer[buffer_index] ^ terminal_buffer[buffer_index]) & bit_offset)) {
+          !((SSD1306_Buffer[buffer_index] ^ SSD1306_TerminalBuffer[buffer_index]) & bit_offset)) {
         move_cursor = true;
         continue;
       }
 
       // Synchronize buffers
       if (SSD1306_Buffer[buffer_index] & bit_offset)
-        terminal_buffer[buffer_index] |= bit_offset;
+        SSD1306_TerminalBuffer[buffer_index] |= bit_offset;
       else
-        terminal_buffer[buffer_index] &= ~bit_offset;
+        SSD1306_TerminalBuffer[buffer_index] &= ~bit_offset;
 
       if (move_cursor) {
         // Move terminal cursor to (x, y) using escape codes
@@ -122,12 +132,13 @@ void ssd1306_UpdateScreen(void) {
   printf("\033[%d;%dH", SSD1306_HEIGHT + 3, 1);
 }
 
-/*
- * Draw one pixel in the screenbuffer
- * x => X Coordinate
- * y => Y Coordinate
- * color => Pixel color
- */
+// Position the cursor
+void ssd1306_SetCursor(uint8_t x, uint8_t y) {
+  SSD1306.CurrentX = x;
+  SSD1306.CurrentY = y;
+}
+
+// Draw one pixel to the screenbuffer
 void ssd1306_DrawPixel(uint8_t x, uint8_t y, SSD1306_COLOR color) {
   if (x >= SSD1306_WIDTH || y >= SSD1306_HEIGHT)
     // Don't write outside the buffer
@@ -140,12 +151,7 @@ void ssd1306_DrawPixel(uint8_t x, uint8_t y, SSD1306_COLOR color) {
     SSD1306_Buffer[x + (y / 8) * SSD1306_WIDTH] &= ~(1 << (y % 8));
 }
 
-/*
- * Draw 1 char to the screen buffer
- * ch       => char to write
- * Font     => Font with which we will write
- * color    => Black or White
- */
+// Draw 1 char to the screen buffer
 char ssd1306_WriteChar(char ch, SSD1306_Font_t Font, SSD1306_COLOR color) {
   uint32_t i, b, j;
 
@@ -193,19 +199,13 @@ char ssd1306_WriteString(char* str, SSD1306_Font_t Font, SSD1306_COLOR color) {
   return *str;
 }
 
-// Position the cursor
-void ssd1306_SetCursor(uint8_t x, uint8_t y) {
-  SSD1306.CurrentX = x;
-  SSD1306.CurrentY = y;
-}
-
-// Draw line by Bresenhem's algorithm
+// Draw line by Bresenham's algorithm
 void ssd1306_Line(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, SSD1306_COLOR color) {
-  int32_t deltaX = abs(x2 - x1);
-  int32_t deltaY = abs(y2 - y1);
-  int32_t signX = ((x1 < x2) ? 1 : -1);
-  int32_t signY = ((y1 < y2) ? 1 : -1);
-  int32_t error = deltaX - deltaY;
+  int32_t delta_x = abs(x2 - x1);
+  int32_t delta_y = abs(y2 - y1);
+  int32_t sign_x = ((x1 < x2) ? 1 : -1);
+  int32_t sign_y = ((y1 < y2) ? 1 : -1);
+  int32_t error = delta_x - delta_y;
   int32_t error2;
 
   ssd1306_DrawPixel(x2, y2, color);
@@ -214,14 +214,14 @@ void ssd1306_Line(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, SSD1306_COLOR 
     ssd1306_DrawPixel(x1, y1, color);
     error2 = error * 2;
 
-    if (error2 > -deltaY) {
-      error -= deltaY;
-      x1 += signX;
+    if (error2 > -delta_y) {
+      error -= delta_y;
+      x1 += sign_x;
     }
 
-    if (error2 < deltaX) {
-      error += deltaX;
-      y1 += signY;
+    if (error2 < delta_x) {
+      error += delta_x;
+      y1 += sign_y;
     }
   }
 }
@@ -234,6 +234,57 @@ void ssd1306_Polyline(const SSD1306_VERTEX* par_vertex, uint16_t par_size, SSD13
 
   for (i = 1; i < par_size; i++)
     ssd1306_Line(par_vertex[i - 1].x, par_vertex[i - 1].y, par_vertex[i].x, par_vertex[i].y, color);
+}
+
+// Draw a rectangle
+void ssd1306_DrawRectangle(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, SSD1306_COLOR color) {
+  ssd1306_Line(x1, y1, x2, y1, color);
+  ssd1306_Line(x2, y1, x2, y2, color);
+  ssd1306_Line(x2, y2, x1, y2, color);
+  ssd1306_Line(x1, y2, x1, y1, color);
+}
+
+// Draw a filled rectangle
+void ssd1306_FillRectangle(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, SSD1306_COLOR color) {
+  uint8_t x_start = ((x1 <= x2) ? x1 : x2);
+  uint8_t x_end = ((x1 <= x2) ? x2 : x1);
+  uint8_t y_start = ((y1 <= y2) ? y1 : y2);
+  uint8_t y_end = ((y1 <= y2) ? y2 : y1);
+
+  for (uint8_t y = y_start; (y <= y_end) && (y < SSD1306_HEIGHT); y++)
+    for (uint8_t x = x_start; (x <= x_end) && (x < SSD1306_WIDTH); x++)
+      ssd1306_DrawPixel(x, y, color);
+}
+
+// Invert color of pixels in a rectangular area (include border)
+SSD1306_Error_t ssd1306_InvertRectangle(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2) {
+  if ((x2 >= SSD1306_WIDTH) || (y2 >= SSD1306_HEIGHT))
+    return SSD1306_ERR;
+
+  if ((x1 > x2) || (y1 > y2))
+    return SSD1306_ERR;
+
+  uint32_t i;
+  if ((y1 / 8) != (y2 / 8)) {
+    // If rectangle doesn't lie on one 8px row
+    for (uint32_t x = x1; x <= x2; x++) {
+      i = x + (y1 / 8) * SSD1306_WIDTH;
+      SSD1306_Buffer[i] ^= 0xFF << (y1 % 8);
+      i += SSD1306_WIDTH;
+
+      for (; i < x + (y2 / 8) * SSD1306_WIDTH; i += SSD1306_WIDTH)
+        SSD1306_Buffer[i] ^= 0xFF;
+
+      SSD1306_Buffer[i] ^= 0xFF >> (7 - (y2 % 8));
+    }
+  } else {
+    // If rectangle lies on one 8px row
+    const uint8_t mask = (0xFF << (y1 % 8)) & (0xFF >> (7 - (y2 % 8)));
+    for (i = x1 + (y1 / 8) * SSD1306_WIDTH; i <= (uint32_t)x2 + (y2 / 8) * SSD1306_WIDTH; i++)
+      SSD1306_Buffer[i] ^= mask;
+  }
+
+  return SSD1306_OK;
 }
 
 // Convert degrees to radians
@@ -251,12 +302,7 @@ static uint16_t ssd1306_NormalizeTo0_360(uint16_t par_deg) {
   return loc_angle;
 }
 
-/*
- * Draw an arc
- * Angle is beginning from 4th quart of trigonometric circle (3pi/2)
- * start_angle: start angle in degree
- * sweep: finish angle in degree
- */
+// Draw an arc
 void ssd1306_DrawArc(
     uint8_t x, uint8_t y, uint8_t radius, uint16_t start_angle, uint16_t sweep, SSD1306_COLOR color
 ) {
@@ -292,12 +338,7 @@ void ssd1306_DrawArc(
   }
 }
 
-/*
- * Draw an arc with radius line
- * Angle is beginning from 4th quart of trigonometric circle (3pi/2)
- * start_angle: start angle in degree
- * sweep: finish angle in degree
- */
+// Draw an arc with radius lines
 void ssd1306_DrawArcWithRadiusLine(
     uint8_t x, uint8_t y, uint8_t radius, uint16_t start_angle, uint16_t sweep, SSD1306_COLOR color
 ) {
@@ -343,7 +384,7 @@ void ssd1306_DrawArcWithRadiusLine(
   ssd1306_Line(x, y, xp2, yp2, color);
 }
 
-// Draw circle by Bresenhem's algorithm
+// Draw circle by Bresenham's algorithm
 void ssd1306_DrawCircle(uint8_t par_x, uint8_t par_y, uint8_t par_r, SSD1306_COLOR par_color) {
   int32_t x = -par_r;
   int32_t y = 0;
@@ -404,61 +445,11 @@ void ssd1306_FillCircle(uint8_t par_x, uint8_t par_y, uint8_t par_r, SSD1306_COL
   } while (x <= 0);
 }
 
-// Draw a rectangle
-void ssd1306_DrawRectangle(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, SSD1306_COLOR color) {
-  ssd1306_Line(x1, y1, x2, y1, color);
-  ssd1306_Line(x2, y1, x2, y2, color);
-  ssd1306_Line(x2, y2, x1, y2, color);
-  ssd1306_Line(x1, y2, x1, y1, color);
-}
-
-// Draw a filled rectangle
-void ssd1306_FillRectangle(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, SSD1306_COLOR color) {
-  uint8_t x_start = ((x1 <= x2) ? x1 : x2);
-  uint8_t x_end = ((x1 <= x2) ? x2 : x1);
-  uint8_t y_start = ((y1 <= y2) ? y1 : y2);
-  uint8_t y_end = ((y1 <= y2) ? y2 : y1);
-
-  for (uint8_t y = y_start; (y <= y_end) && (y < SSD1306_HEIGHT); y++)
-    for (uint8_t x = x_start; (x <= x_end) && (x < SSD1306_WIDTH); x++)
-      ssd1306_DrawPixel(x, y, color);
-}
-
-SSD1306_Error_t ssd1306_InvertRectangle(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2) {
-  if ((x2 >= SSD1306_WIDTH) || (y2 >= SSD1306_HEIGHT))
-    return SSD1306_ERR;
-
-  if ((x1 > x2) || (y1 > y2))
-    return SSD1306_ERR;
-
-  uint32_t i;
-  if ((y1 / 8) != (y2 / 8)) {
-    // If rectangle doesn't lie on one 8px row
-    for (uint32_t x = x1; x <= x2; x++) {
-      i = x + (y1 / 8) * SSD1306_WIDTH;
-      SSD1306_Buffer[i] ^= 0xFF << (y1 % 8);
-      i += SSD1306_WIDTH;
-
-      for (; i < x + (y2 / 8) * SSD1306_WIDTH; i += SSD1306_WIDTH)
-        SSD1306_Buffer[i] ^= 0xFF;
-
-      SSD1306_Buffer[i] ^= 0xFF >> (7 - (y2 % 8));
-    }
-  } else {
-    // If rectangle lies on one 8px row
-    const uint8_t mask = (0xFF << (y1 % 8)) & (0xFF >> (7 - (y2 % 8)));
-    for (i = x1 + (y1 / 8) * SSD1306_WIDTH; i <= (uint32_t)x2 + (y2 / 8) * SSD1306_WIDTH; i++)
-      SSD1306_Buffer[i] ^= mask;
-  }
-
-  return SSD1306_OK;
-}
-
 // Draw a bitmap
 void ssd1306_DrawBitmap(
     uint8_t x, uint8_t y, const unsigned char* bitmap, uint8_t w, uint8_t h, SSD1306_COLOR color
 ) {
-  int16_t byteWidth = (w + 7) / 8; // Bitmap scanline pad = whole byte
+  int16_t byte_width = (w + 7) / 8; // Bitmap scanline pad = whole byte
   uint8_t byte = 0;
 
   if (x >= SSD1306_WIDTH || y >= SSD1306_HEIGHT)
@@ -469,10 +460,54 @@ void ssd1306_DrawBitmap(
       if (i & 7)
         byte <<= 1;
       else
-        byte = (*(const unsigned char*)(&bitmap[j * byteWidth + i / 8]));
+        byte = (*(const unsigned char*)(&bitmap[j * byte_width + i / 8]));
 
       if (byte & 0x80)
         ssd1306_DrawPixel(x + i, y, color);
     }
   }
 }
+
+// Get number of ticks elapsed since the start
+uint32_t HAL_GetTick(void) {
+#ifdef _WIN32
+  static LARGE_INTEGER freq;
+  static LARGE_INTEGER start;
+  LARGE_INTEGER now;
+
+  if (freq.QuadPart == 0) {
+    QueryPerformanceFrequency(&freq);
+    QueryPerformanceCounter(&start);
+  }
+
+  QueryPerformanceCounter(&now);
+
+  return (uint32_t)((now.QuadPart - start.QuadPart) * 1000ull / freq.QuadPart);
+#elif defined(__linux__) || defined(__APPLE__)
+  static struct timespec start;
+  struct timespec now;
+
+  if (start.tv_sec == 0 && start.tv_nsec == 0) {
+    clock_gettime(CLOCK_MONOTONIC, &start);
+  }
+
+  clock_gettime(CLOCK_MONOTONIC, &now);
+
+  time_t sec = now.tv_sec - start.tv_sec;
+  long nsec = now.tv_nsec - start.tv_nsec;
+
+  if (nsec < 0) {
+    sec--;
+    nsec += 1000000000l;
+  }
+
+  uint64_t ms = (uint64_t)sec * 1000ull + (uint64_t)nsec / 1000000ull;
+
+  return (uint32_t)ms;
+#else
+#error "Platform unsupported"
+#endif
+}
+
+// Create a delay
+void HAL_Delay(uint32_t Delay) { usleep(Delay * 1000); }
