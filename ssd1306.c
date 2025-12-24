@@ -25,7 +25,7 @@ static uint8_t SSD1306_TerminalBuffer[SSD1306_BUFFER_SIZE];
 // Screen object
 static SSD1306_t SSD1306;
 
-// Initialize the screen
+// Initialize the screen and terminal with defaults
 void ssd1306_Init(void) {
   // Clear terminal screen
 #ifdef _WIN32
@@ -134,12 +134,7 @@ void ssd1306_SetCursor(uint8_t x, uint8_t y) {
   SSD1306.CurrentY = y;
 }
 
-/*
- * Draw one pixel in the screenbuffer
- * x => X Coordinate
- * y => Y Coordinate
- * color => Pixel color
- */
+// Draw one pixel to the screenbuffer
 void ssd1306_DrawPixel(uint8_t x, uint8_t y, SSD1306_COLOR color) {
   if (x >= SSD1306_WIDTH || y >= SSD1306_HEIGHT)
     // Don't write outside the buffer
@@ -152,12 +147,7 @@ void ssd1306_DrawPixel(uint8_t x, uint8_t y, SSD1306_COLOR color) {
     SSD1306_Buffer[x + (y / 8) * SSD1306_WIDTH] &= ~(1 << (y % 8));
 }
 
-/*
- * Draw 1 char to the screen buffer
- * ch       => char to write
- * Font     => Font with which we will write
- * color    => Black or White
- */
+// Draw 1 char to the screen buffer
 char ssd1306_WriteChar(char ch, SSD1306_Font_t Font, SSD1306_COLOR color) {
   uint32_t i, b, j;
 
@@ -205,7 +195,7 @@ char ssd1306_WriteString(char* str, SSD1306_Font_t Font, SSD1306_COLOR color) {
   return *str;
 }
 
-// Draw line by Bresenhem's algorithm
+// Draw line by Bresenham's algorithm
 void ssd1306_Line(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, SSD1306_COLOR color) {
   int32_t delta_x = abs(x2 - x1);
   int32_t delta_y = abs(y2 - y1);
@@ -262,6 +252,7 @@ void ssd1306_FillRectangle(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, SSD13
       ssd1306_DrawPixel(x, y, color);
 }
 
+// Invert color of pixels in a rectangular area (include border)
 SSD1306_Error_t ssd1306_InvertRectangle(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2) {
   if ((x2 >= SSD1306_WIDTH) || (y2 >= SSD1306_HEIGHT))
     return SSD1306_ERR;
@@ -307,12 +298,7 @@ static uint16_t ssd1306_NormalizeTo0_360(uint16_t par_deg) {
   return loc_angle;
 }
 
-/*
- * Draw an arc
- * Angle is beginning from 4th quart of trigonometric circle (3pi/2)
- * start_angle: start angle in degree
- * sweep: finish angle in degree
- */
+// Draw an arc
 void ssd1306_DrawArc(
     uint8_t x, uint8_t y, uint8_t radius, uint16_t start_angle, uint16_t sweep, SSD1306_COLOR color
 ) {
@@ -348,12 +334,7 @@ void ssd1306_DrawArc(
   }
 }
 
-/*
- * Draw an arc with radius line
- * Angle is beginning from 4th quart of trigonometric circle (3pi/2)
- * start_angle: start angle in degree
- * sweep: finish angle in degree
- */
+// Draw an arc with radius lines
 void ssd1306_DrawArcWithRadiusLine(
     uint8_t x, uint8_t y, uint8_t radius, uint16_t start_angle, uint16_t sweep, SSD1306_COLOR color
 ) {
@@ -399,7 +380,7 @@ void ssd1306_DrawArcWithRadiusLine(
   ssd1306_Line(x, y, xp2, yp2, color);
 }
 
-// Draw circle by Bresenhem's algorithm
+// Draw circle by Bresenham's algorithm
 void ssd1306_DrawCircle(uint8_t par_x, uint8_t par_y, uint8_t par_r, SSD1306_COLOR par_color) {
   int32_t x = -par_r;
   int32_t y = 0;
@@ -483,7 +464,7 @@ void ssd1306_DrawBitmap(
   }
 }
 
-// Emulates the behavior of HAL_GetTick
+// Get number of ticks elapsed since the start
 uint32_t HAL_GetTick(void) {
 #ifdef _WIN32
   static LARGE_INTEGER freq;
@@ -524,5 +505,5 @@ uint32_t HAL_GetTick(void) {
 #endif
 }
 
-// Emulates the behavior of HAL_Delay
+// Create a delay
 void HAL_Delay(uint32_t Delay) { usleep(Delay * 1000); }
