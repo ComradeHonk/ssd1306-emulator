@@ -19,8 +19,8 @@
 
 // Screenbuffer
 static uint8_t SSD1306_Buffer[SSD1306_BUFFER_SIZE];
-// Terminal buffer
-static uint8_t terminal_buffer[SSD1306_BUFFER_SIZE];
+// Terminal buffer, needed for partial redraw
+static uint8_t SSD1306_TerminalBuffer[SSD1306_BUFFER_SIZE];
 
 // Screen object
 static SSD1306_t SSD1306;
@@ -87,16 +87,16 @@ void ssd1306_UpdateScreen(void) {
 
       // If pixel hasn't changed, do not render it
       if (!draw_start &&
-          !((SSD1306_Buffer[buffer_index] ^ terminal_buffer[buffer_index]) & bit_offset)) {
+          !((SSD1306_Buffer[buffer_index] ^ SSD1306_TerminalBuffer[buffer_index]) & bit_offset)) {
         move_cursor = true;
         continue;
       }
 
       // Synchronize buffers
       if (SSD1306_Buffer[buffer_index] & bit_offset)
-        terminal_buffer[buffer_index] |= bit_offset;
+        SSD1306_TerminalBuffer[buffer_index] |= bit_offset;
       else
-        terminal_buffer[buffer_index] &= ~bit_offset;
+        SSD1306_TerminalBuffer[buffer_index] &= ~bit_offset;
 
       if (move_cursor) {
         // Move terminal cursor to (x, y) using escape codes
@@ -207,11 +207,11 @@ char ssd1306_WriteString(char* str, SSD1306_Font_t Font, SSD1306_COLOR color) {
 
 // Draw line by Bresenhem's algorithm
 void ssd1306_Line(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, SSD1306_COLOR color) {
-  int32_t deltaX = abs(x2 - x1);
-  int32_t deltaY = abs(y2 - y1);
-  int32_t signX = ((x1 < x2) ? 1 : -1);
-  int32_t signY = ((y1 < y2) ? 1 : -1);
-  int32_t error = deltaX - deltaY;
+  int32_t delta_x = abs(x2 - x1);
+  int32_t delta_y = abs(y2 - y1);
+  int32_t sign_x = ((x1 < x2) ? 1 : -1);
+  int32_t sign_y = ((y1 < y2) ? 1 : -1);
+  int32_t error = delta_x - delta_y;
   int32_t error2;
 
   ssd1306_DrawPixel(x2, y2, color);
@@ -220,14 +220,14 @@ void ssd1306_Line(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, SSD1306_COLOR 
     ssd1306_DrawPixel(x1, y1, color);
     error2 = error * 2;
 
-    if (error2 > -deltaY) {
-      error -= deltaY;
-      x1 += signX;
+    if (error2 > -delta_y) {
+      error -= delta_y;
+      x1 += sign_x;
     }
 
-    if (error2 < deltaX) {
-      error += deltaX;
-      y1 += signY;
+    if (error2 < delta_x) {
+      error += delta_x;
+      y1 += sign_y;
     }
   }
 }
@@ -464,7 +464,7 @@ void ssd1306_FillCircle(uint8_t par_x, uint8_t par_y, uint8_t par_r, SSD1306_COL
 void ssd1306_DrawBitmap(
     uint8_t x, uint8_t y, const unsigned char* bitmap, uint8_t w, uint8_t h, SSD1306_COLOR color
 ) {
-  int16_t byteWidth = (w + 7) / 8; // Bitmap scanline pad = whole byte
+  int16_t byte_width = (w + 7) / 8; // Bitmap scanline pad = whole byte
   uint8_t byte = 0;
 
   if (x >= SSD1306_WIDTH || y >= SSD1306_HEIGHT)
@@ -475,7 +475,7 @@ void ssd1306_DrawBitmap(
       if (i & 7)
         byte <<= 1;
       else
-        byte = (*(const unsigned char*)(&bitmap[j * byteWidth + i / 8]));
+        byte = (*(const unsigned char*)(&bitmap[j * byte_width + i / 8]));
 
       if (byte & 0x80)
         ssd1306_DrawPixel(x + i, y, color);
