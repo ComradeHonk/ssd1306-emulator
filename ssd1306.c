@@ -70,45 +70,63 @@ void ssd1306_UpdateScreen(void) {
   if (draw_start) {
     // Print top border only at the start
     printf("╔");
-    for (x = 0; x < SSD1306_WIDTH * 2; x++)
+    for (x = 0; x < SSD1306_WIDTH; x++)
       printf("═");
     printf("╗\n");
   }
 
-  // '█' - White, ' ' - Black
-  for (y = 0; y < SSD1306_HEIGHT; y++) {
+  // Skip over to handle 2 pixels vertically at once
+  for (y = 0; y < SSD1306_HEIGHT - 1; y += 2) {
     if (draw_start)
       printf("║"); // Left border
 
     bool move_cursor = draw_start ? false : true;
 
     for (x = 0; x < SSD1306_WIDTH; x++) {
-      size_t buffer_index = x + (y / 8) * SSD1306_WIDTH;
-      uint8_t bit_offset = 1 << (y % 8);
+      // Get 2 pixels, upper and lower
+      size_t upper_pixel_buffer_index = x + (y / 8) * SSD1306_WIDTH;
+      uint8_t upper_pixel_offset = 1 << (y % 8);
+      size_t lower_pixel_buffer_index = x + ((y + 1) / 8) * SSD1306_WIDTH;
+      uint8_t lower_pixel_offset = 1 << ((y + 1) % 8);
 
-      // If pixel hasn't changed, do not render it
+      // If both pixels haven't changed, do not re-render them
       if (!draw_start &&
-          !((SSD1306_Buffer[buffer_index] ^ SSD1306_TerminalBuffer[buffer_index]) & bit_offset)) {
+          !((SSD1306_Buffer[upper_pixel_buffer_index] ^
+             SSD1306_TerminalBuffer[upper_pixel_buffer_index]) &
+            upper_pixel_offset) &&
+          !((SSD1306_Buffer[lower_pixel_buffer_index] ^
+             SSD1306_TerminalBuffer[lower_pixel_buffer_index]) &
+            lower_pixel_offset)) {
         move_cursor = true;
         continue;
       }
 
       // Synchronize buffers
-      if (SSD1306_Buffer[buffer_index] & bit_offset)
-        SSD1306_TerminalBuffer[buffer_index] |= bit_offset;
+      if (SSD1306_Buffer[upper_pixel_buffer_index] & upper_pixel_offset)
+        SSD1306_TerminalBuffer[upper_pixel_buffer_index] |= upper_pixel_offset;
       else
-        SSD1306_TerminalBuffer[buffer_index] &= ~bit_offset;
+        SSD1306_TerminalBuffer[upper_pixel_buffer_index] &= ~upper_pixel_offset;
+
+      if (SSD1306_Buffer[lower_pixel_buffer_index] & lower_pixel_offset)
+        SSD1306_TerminalBuffer[lower_pixel_buffer_index] |= lower_pixel_offset;
+      else
+        SSD1306_TerminalBuffer[lower_pixel_buffer_index] &= ~lower_pixel_offset;
 
       if (move_cursor) {
-        // Move terminal cursor to (x, y) using escape codes
-        printf("\033[%d;%dH", y + 2, x * 2 + 2);
+        // Move terminal cursor to the position of the pixels using escape codes
+        printf("\033[%d;%dH", y / 2 + 2, x + 2);
         move_cursor = false;
       }
 
-      if (SSD1306_Buffer[buffer_index] & bit_offset)
-        printf("██");
+      if ((SSD1306_Buffer[upper_pixel_buffer_index] & upper_pixel_offset) &&
+          (SSD1306_Buffer[lower_pixel_buffer_index] & lower_pixel_offset))
+        printf("█"); // Both pixels are white
+      else if (SSD1306_Buffer[upper_pixel_buffer_index] & upper_pixel_offset)
+        printf("▀"); // Upper pixel is white
+      else if (SSD1306_Buffer[lower_pixel_buffer_index] & lower_pixel_offset)
+        printf("▄"); // Lower pixel is white
       else
-        printf("  ");
+        printf(" "); // Both pixels are black
     }
 
     if (draw_start)
@@ -118,7 +136,7 @@ void ssd1306_UpdateScreen(void) {
   if (draw_start) {
     // Bottom border
     printf("╚");
-    for (x = 0; x < SSD1306_WIDTH * 2; x++)
+    for (x = 0; x < SSD1306_WIDTH; x++)
       printf("═");
     printf("╝\n");
 
@@ -129,7 +147,7 @@ void ssd1306_UpdateScreen(void) {
   fflush(stdout);
 
   // Move terminal cursor below the screen
-  printf("\033[%d;%dH", SSD1306_HEIGHT + 3, 1);
+  printf("\033[%d;%dH", SSD1306_HEIGHT / 2 + 3, 1);
 }
 
 // Position the cursor

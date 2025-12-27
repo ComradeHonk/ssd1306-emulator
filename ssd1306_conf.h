@@ -17,7 +17,8 @@
 // define. The default value is 128
 #define SSD1306_WIDTH 128
 
-// The height can be changed as well if necessary.
+// The height can be changed as well if necessary,
+// but it must be an even number or else the last row won't be rendered.
 // The default value is 64
 #define SSD1306_HEIGHT 64
 
