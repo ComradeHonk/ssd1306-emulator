@@ -76,7 +76,7 @@ void ssd1306_UpdateScreen(void) {
   }
 
   // Skip over to handle 2 pixels vertically at once
-  for (y = 0; y < SSD1306_HEIGHT; y += 2) {
+  for (y = 0; y < SSD1306_HEIGHT - 1; y += 2) {
     if (draw_start)
       printf("║"); // Left border
 
