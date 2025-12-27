@@ -1,9 +1,11 @@
 # ssd1306-emulator
 Library for emulating the SSD1306 OLED display in the terminal, based on [stm32-ssd1306](https://github.com/afiskon/stm32-ssd1306).
 
-It works by printing the screenbuffer to the terminal using pairs of characters (to achieve the correct aspect ratio):
-- '██' for white pixels
-- spaces for black pixels
+It works by printing the screenbuffer pixels to the terminal in pairs using block characters:
+- '█' for 2 white pixels
+- '▀' for upper white and lower black pixel
+- '▄' for upper black and lower white pixel
+- spaces for 2 black pixels
 
 A frame is added to show screen boundaries.
 
@@ -11,7 +13,7 @@ It uses partial redraw (draws only changed pixels) to conserve resources and imp
 
 > [!NOTE]
 > Rendering performance may vary between terminal emulators. While Linux terminals can comfortably draw at 2000+ FPS,
-on Windows it's common to have around 3-6 FPS due to Windows console being really slow and inefficient.
+on Windows it's common to have around 10 FPS due to Windows console being really slow and inefficient.
 
 In addition to functions available in the [original library](https://github.com/afiskon/stm32-ssd1306),
 it offers PC implementations of `HAL_GetTick` and `HAL_Delay` which might be useful for writing code
@@ -20,8 +22,8 @@ that can be copied-and-pasted into an STM32 project.
 ## Usage
 
 > [!IMPORTANT]
-> By default screen size is 128x64. Rendering is done with Unicode characters, so to see the effects
-you'll need to set a very small terminal font size (and have Unicode support, obviously 😉).
+> By default screen size is 128x64. Rendering is done with Unicode characters, so to see the full effects
+you may need to set a smaller terminal font size (and have Unicode support, obviously 😉).
 
 This is a small example of how to use the library:
 ```c
@@ -132,17 +134,22 @@ Configuration is done by editing the contents of [`ssd1306_conf.h`](ssd1306_conf
 
 ### Screen resolution
 The original library is made to work with SSD1306, SH1106, SH1107 and SSD1309 OLED displays as they are compatible with each other.
-This emulator isn't limited to any particular set of devices as it doesn't interface with real hardware, so it can be configured for any
+This emulator isn't limited to any particular set of devices as it doesn't interface with real hardware, so it can be configured for almost any
 screen resolution:
 ```c
 // The width of the screen can be set using this
 // define. The default value is 128
 #define SSD1306_WIDTH 128
 
-// The height can be changed as well if necessary.
+// The height can be changed as well if necessary,
+// but it must be an even number or else the last row won't be rendered.
 // The default value is 64
 #define SSD1306_HEIGHT 64
 ```
+
+> [!WARNING]
+> Height must be an even number or else the last row won't be rendered. This limitation stems from
+added optimizations.
 
 ### Fonts
 There are a number of fonts included with the library. Their use can be toggled with `#define`:
