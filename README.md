@@ -12,8 +12,7 @@ A frame is added to show screen boundaries.
 It uses partial redraw (draws only changed pixels) to conserve resources and improve performance.
 
 > [!NOTE]
-> Rendering performance may vary between terminal emulators. While Linux terminals can comfortably draw at 2000+ FPS,
-on Windows it's common to have around 10 FPS due to Windows console being really slow and inefficient.
+> Rendering performance may vary between platforms and terminal emulators.
 
 In addition to functions available in the [original library](https://github.com/afiskon/stm32-ssd1306),
 it offers PC implementations of `HAL_GetTick` and `HAL_Delay` which might be useful for writing code
@@ -58,6 +57,7 @@ You should see the square appear in the terminal:
 | [`ssd1306_conf.h`](ssd1306_conf.h) | Screen configuration and enabled fonts |
 | [`ssd1306_fonts.h`](ssd1306_fonts.h) | Fonts for writing text to the screen |
 | [`ssd1306_tests.h`](ssd1306_tests.h) | Various tests for exploring functionality and learning |
+| [`experimental.h`](experimental.h) | Experimental features that must be enabled and are not guaranteed to work |
 
 ## Supported platforms
 
@@ -148,8 +148,8 @@ screen resolution:
 ```
 
 > [!WARNING]
-> Height must be an even number or else the last row won't be rendered. This limitation stems from
-added optimizations.
+> Height must be an even number or else the last row won't be rendered.
+This limitation stems from use of half blocks for rendering.
 
 ### Fonts
 There are a number of fonts included with the library. Their use can be toggled with `#define`:
@@ -166,6 +166,22 @@ There are a number of fonts included with the library. Their use can be toggled 
 ```
 
 If you wish to use custom fonts, see [this example](https://github.com/afiskon/stm32-ssd1306/tree/master/examples/custom-fonts) in the original library repo.
+
+### Experimental features
+Experimental features are not guaranteed to work and can be enabled using flags.
+You need to include [`experimental.h`](experimental.h) to use them.
+
+#### Octant renderer
+Uses [octants](https://wiki.ourworldoftext.com/wiki/Octant) for rendering instead of half blocks.
+This greatly improves performance at the cost of compatibility, as not every terminal font supports them.
+Octant renderer requires height to be divisible by 4 and width must be an even number.
+This is a technical limitation as one octant represents 2x4 area of pixels.
+
+Octant renderer can be enabled by adding:
+```c
+#define EXP_OCTANT_RENDERER
+```
+to [`ssd1306_conf.h`](ssd1306_conf.h).
 
 ## Credits
 
