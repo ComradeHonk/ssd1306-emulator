@@ -34,10 +34,10 @@ static SSD1306_t SSD1306;
 void ssd1306_Init(void) {
   // Set larger stdout buffer to fit the whole scene
 #ifdef EXP_OCTANT_RENDERER
-  char buffer_setvbuf[2048];
+  static char buffer_setvbuf[2048];
   setvbuf(stdout, buffer_setvbuf, _IOFBF, sizeof buffer_setvbuf);
 #else
-  char buffer_setvbuf[2048 * 2];
+  static char buffer_setvbuf[2048 * 2];
   setvbuf(stdout, buffer_setvbuf, _IOFBF, sizeof buffer_setvbuf);
 #endif
 
