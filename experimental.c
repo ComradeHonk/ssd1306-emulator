@@ -122,9 +122,9 @@ void octantrenderer_UpdateScreen(
     draw_start = false;
   }
 
-  fflush(stdout);
-
   // Move terminal cursor below the screen
   printf("\033[%d;%dH", SSD1306_HEIGHT / 4 + 3, 1);
+
+  fflush(stdout);
 }
 #endif
