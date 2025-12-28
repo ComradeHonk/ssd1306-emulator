@@ -75,7 +75,7 @@ Functionality can be tested by compiling the program [`test_all.c`](test_all.c) 
 ```
 git clone https://github.com/ComradeHonk/ssd1306-emulator.git
 cd ssd1306-emulator
-gcc test_all.c ssd1306.c ssd1306_tests.c ssd1306_fonts.c -lm
+gcc test_all.c ssd1306.c ssd1306_tests.c ssd1306_fonts.c -lm -O3
 ```
 and running it with:
 ```
