@@ -9,6 +9,10 @@
 #include <string.h>
 #include <unistd.h>
 
+#ifdef EXP_OCTANT_RENDERER
+#include "experimental.h"
+#endif
+
 #ifdef _WIN32
 #include <windows.h>
 #elif defined(__linux__) || defined(__APPLE__)
@@ -64,6 +68,9 @@ void ssd1306_Fill(SSD1306_COLOR color) {
  * Uses partial redraw for best performance
  */
 void ssd1306_UpdateScreen(void) {
+#ifdef EXP_OCTANT_RENDERER
+  octantrenderer_UpdateScreen(SSD1306_Buffer, SSD1306_TerminalBuffer);
+#else
   uint16_t x, y;
 
   static bool draw_start = true;
@@ -148,6 +155,7 @@ void ssd1306_UpdateScreen(void) {
 
   // Move terminal cursor below the screen
   printf("\033[%d;%dH", SSD1306_HEIGHT / 2 + 3, 1);
+#endif
 }
 
 // Position the cursor

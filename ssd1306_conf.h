@@ -22,4 +22,11 @@
 // The default value is 64
 #define SSD1306_HEIGHT 64
 
+// Flags for enabling experimental features.
+// Experimental features are not guaranteed to work and are here for testing purposes
+
+// Uses octants for rendering instead of half blocks. Greatly improves performance
+// at a cost of compatibility, as not every terminal font supports octants
+#define EXP_OCTANT_RENDERER
+
 #endif /* __SSD1306_CONF_H__ */
