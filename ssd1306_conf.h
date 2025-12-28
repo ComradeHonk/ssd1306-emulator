@@ -29,6 +29,6 @@
 // at the cost of compatibility, as not every terminal font supports them.
 // Octant renderer requires height to be divisible by 4 and width must be an even number.
 // This is a technical limitation as one octant represents 2x4 area of pixels
-#define EXP_OCTANT_RENDERER
+// #define EXP_OCTANT_RENDERER
 
 #endif /* __SSD1306_CONF_H__ */
