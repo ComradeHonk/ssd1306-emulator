@@ -9,6 +9,10 @@
 #include <string.h>
 #include <unistd.h>
 
+#ifdef EXP_OCTANT_RENDERER
+#include "experimental.h"
+#endif
+
 #ifdef _WIN32
 #include <windows.h>
 #elif defined(__linux__) || defined(__APPLE__)
@@ -28,6 +32,15 @@ static SSD1306_t SSD1306;
 
 // Initialize the screen and terminal with defaults
 void ssd1306_Init(void) {
+  // Set larger stdout buffer to fit the whole scene
+#ifdef EXP_OCTANT_RENDERER
+  static char buffer_setvbuf[2048];
+  setvbuf(stdout, buffer_setvbuf, _IOFBF, sizeof buffer_setvbuf);
+#else
+  static char buffer_setvbuf[2048 * 2];
+  setvbuf(stdout, buffer_setvbuf, _IOFBF, sizeof buffer_setvbuf);
+#endif
+
   // Clear terminal screen
 #ifdef _WIN32
   // Set proper codepage on Windows
@@ -64,6 +77,9 @@ void ssd1306_Fill(SSD1306_COLOR color) {
  * Uses partial redraw for best performance
  */
 void ssd1306_UpdateScreen(void) {
+#ifdef EXP_OCTANT_RENDERER
+  octantrenderer_UpdateScreen(SSD1306_Buffer, SSD1306_TerminalBuffer);
+#else
   uint16_t x, y;
 
   static bool draw_start = true;
@@ -144,10 +160,11 @@ void ssd1306_UpdateScreen(void) {
     draw_start = false;
   }
 
-  fflush(stdout);
-
   // Move terminal cursor below the screen
   printf("\033[%d;%dH", SSD1306_HEIGHT / 2 + 3, 1);
+
+  fflush(stdout);
+#endif
 }
 
 // Position the cursor
